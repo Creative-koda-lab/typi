@@ -5,6 +5,8 @@ dist/
 
 # claude 
 .claude/
+Agents.md
+.vscode/
 
 # dependencies
 node_modules/
