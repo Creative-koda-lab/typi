@@ -6,6 +6,13 @@ import { auth } from '../lib/auth';
 
 // Get session server-side
 const session = await auth.api.getSession({ headers: Astro.request.headers });
+const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
+const analyticsInitScript = gaMeasurementId
+	? `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${gaMeasurementId}');`
+	: undefined;
 ---
 
 <html lang="en" class="dark">
@@ -15,6 +22,12 @@ const session = await auth.api.getSession({ headers: Astro.request.headers });
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Typi - Typing Practice</title>
+{gaMeasurementId && (
+	<Fragment>
+		<script async src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}></script>
+		<script is:inline>{analyticsInitScript}</script>
+	</Fragment>
+)}
 		<style>
 			@keyframes fadeIn {
 				from {
@@ -140,6 +153,12 @@ const session = await auth.api.getSession({ headers: Astro.request.headers });
 
 		<script>
 			import { authClient } from '../lib/auth-client';
+
+			declare global {
+				interface Window {
+					gtag?: (...args: unknown[]) => void;
+				}
+			}
 
 			// Sign In button
 			const signInBtn = document.getElementById('signInBtn');
@@ -369,6 +388,15 @@ const session = await auth.api.getSession({ headers: Astro.request.headers });
 				// Save top score
 				const currentWPM = parseInt(wpmDisplay.textContent || '0', 10);
 				saveTopScore(currentWPM);
+
+				const accuracyValue = parseInt(accuracyDisplay.textContent || '0', 10);
+				if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+					window.gtag('event', 'typing_test_completed', {
+						value: currentWPM,
+						wpm: currentWPM,
+						accuracy: accuracyValue
+					});
+				}
 
 				// Dispatch event to reload leaderboard
 				window.dispatchEvent(new CustomEvent('testCompleted'));

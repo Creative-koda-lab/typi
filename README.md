@@ -128,6 +128,7 @@ typi/
 - `MONGODB_URI`: MongoDB connection string
 - `AUTH_SECRET`: Secret key for Better Auth sessions
 - `PUBLIC_APP_URL`: Your app's base URL
+- `PUBLIC_GA_MEASUREMENT_ID`: (Optional) Google Analytics 4 measurement ID for page and event tracking
 
 ## Production Deployment
 
