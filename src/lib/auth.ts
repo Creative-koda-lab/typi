@@ -2,17 +2,46 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { anonymous } from "better-auth/plugins";
 import { MongoClient } from "mongodb";
+import { Resource } from "sst";
 
-// MongoDB connection
-const mongoUrl = import.meta.env.MONGODB_URI || "mongodb://localhost:27017/typivibe";
-const client = new MongoClient(mongoUrl);
+// MongoDB connection using SST Resource
+const mongoUrl = Resource.MongoDbUri.value;
 
-// Connect to MongoDB
-await client.connect();
-const database = client.db();
+// Create client with aggressive timeouts to detect connection issues quickly
+const client = new MongoClient(mongoUrl, {
+	serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds instead of hanging
+	connectTimeoutMS: 5000,
+	socketTimeoutMS: 5000,
+	maxPoolSize: 1, // Reduce connection pool for serverless
+	minPoolSize: 0,
+	retryWrites: true,
+	retryReads: true,
+});
+
+let isConnected = false;
+let database: any;
+
+async function connectToDatabase() {
+	if (!isConnected) {
+		try {
+			console.log("Attempting to connect to MongoDB...");
+			await client.connect();
+			database = client.db();
+			isConnected = true;
+			console.log("MongoDB connected successfully");
+		} catch (error) {
+			console.error("MongoDB connection failed:", error);
+			throw new Error(`Failed to connect to MongoDB: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	}
+	return database;
+}
+
+// Initialize connection immediately
+const dbPromise = connectToDatabase();
 
 export const auth = betterAuth({
-	database: mongodbAdapter(database, { client }),
+	database: mongodbAdapter(await dbPromise, { client }),
 
 	// Enable email and password authentication
 	emailAndPassword: {
@@ -23,8 +52,8 @@ export const auth = betterAuth({
 	// Enable social authentication
 	socialProviders: {
 		google: {
-			clientId: import.meta.env.GOOGLE_CLIENT_ID || "",
-			clientSecret: import.meta.env.GOOGLE_CLIENT_SECRET || "",
+			clientId: Resource.GoogleClientId?.value || "",
+			clientSecret: Resource.GoogleClientSecret?.value || "",
 		},
 	},
 
@@ -47,6 +76,6 @@ export const auth = betterAuth({
 
 	// Basic configuration
 	baseURL: import.meta.env.PUBLIC_APP_URL || "http://localhost:4321",
-	trustedOrigins: ["http://localhost:4321", "http://localhost:4324"],
-	secret: import.meta.env.AUTH_SECRET || "your-secret-key-change-this-in-production",
+	trustedOrigins: ["http://localhost:4321", "http://localhost:4324", "https://typi.creative-koda.com"],
+	secret: Resource.AuthSecret.value,
 });

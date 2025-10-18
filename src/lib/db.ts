@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
+import { Resource } from "sst";
 
-const mongoUrl = import.meta.env.MONGODB_URI || "mongodb://localhost:27017/typivibe";
+const mongoUrl = Resource.MongoDbUri.value;
 const client = new MongoClient(mongoUrl);
 
 let isConnected = false;
