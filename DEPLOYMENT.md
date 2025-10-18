@@ -1,6 +1,6 @@
 # Deployment Guide (SST + AWS + Cloudflare + MongoDB Atlas)
 
-This document outlines the steps to deploy TypiVibe with [SST](https://sst.dev/) on AWS, use Cloudflare to manage the public domain, and connect to a managed MongoDB Atlas cluster. Adjust names and regions to match your AWS/Cloudflare setup.
+This document outlines the steps to deploy Typi with [SST](https://sst.dev/) on AWS, use Cloudflare to manage the public domain, and connect to a managed MongoDB Atlas cluster. Adjust names and regions to match your AWS/Cloudflare setup.
 
 ## 1. Prerequisites
 
@@ -33,7 +33,7 @@ import * as sst from "sst";
 export default $config({
   app(_input) {
     return {
-      name: "typivibe",
+      name: "typi",
       home: "aws",
       providers: {
         aws: { region: "us-east-1" },
@@ -80,7 +80,7 @@ export default $config({
 
 ```bash
 # MongoDB connection string from Atlas
-sst secret set MongoDbUri "mongodb+srv://<user>:<pass>@cluster0.fao.mongodb.net/typivibe"
+sst secret set MongoDbUri "mongodb+srv://<user>:<pass>@cluster0.fao.mongodb.net/typi"
 
 # Better Auth secret (matches AUTH_SECRET expectation)
 sst secret set AuthSecret "generate-a-long-random-string"
@@ -112,7 +112,7 @@ dns: sst.cloudflare.dns({ zone: "cf_zone_id" })
 ## 7. MongoDB Atlas Networking
 
 1. In Atlas, open `Network Access` → allow traffic from AWS. Best practice is [VPC Peering](https://www.mongodb.com/docs/atlas/security-vpc-peering/); otherwise add the AWS NAT gateway IP ranges created by SST (visible after first deploy) or temporarily `0.0.0.0/0` for testing.
-2. Make sure the user connecting through `MongoDbUri` has read/write roles for the `typivibe` database.
+2. Make sure the user connecting through `MongoDbUri` has read/write roles for the `typi` database.
 
 ## 8. Deploy
 

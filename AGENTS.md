@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-TypiVibe is an Astro 5 project. The main UI lives in `src/pages/index.astro`, while authentication and database helpers are under `src/lib/`. API routes (Better Auth handler and WPM score endpoint) sit in `src/pages/api/`. Shared styles belong in `src/styles/global.css`, and static assets go in `public/`. Docker tooling (`Dockerfile`, `docker-compose.yml`) and configuration (`astro.config.mjs`, `tsconfig.json`) stay in the repo root.
+Typi is an Astro 5 project. The main UI lives in `src/pages/index.astro`, while authentication and database helpers are under `src/lib/`. API routes (Better Auth handler and WPM score endpoint) sit in `src/pages/api/`. Shared styles belong in `src/styles/global.css`, and static assets go in `public/`. Docker tooling (`Dockerfile`, `docker-compose.yml`) and configuration (`astro.config.mjs`, `tsconfig.json`) stay in the repo root.
 
 ## Build, Test, and Development Commands
 - `npm run dev` — launches the Astro dev server on port 4321; ensure MongoDB from Docker is running first.

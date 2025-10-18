@@ -3,22 +3,22 @@ version: '3.8'
 services:
   mongodb:
     image: mongo:latest
-    container_name: typivibe-mongodb
+    container_name: typi-mongodb
     restart: unless-stopped
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_DATABASE: typivibe
+      MONGO_INITDB_DATABASE: typi
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
     networks:
-      - typivibe-network
+      - typi-network
 
   # Optional: MongoDB Express for database management UI
   mongo-express:
     image: mongo-express:latest
-    container_name: typivibe-mongo-express
+    container_name: typi-mongo-express
     restart: unless-stopped
     ports:
       - "8081:8081"
@@ -29,7 +29,7 @@ services:
     depends_on:
       - mongodb
     networks:
-      - typivibe-network
+      - typi-network
 
 volumes:
   mongodb_data:
@@ -38,5 +38,5 @@ volumes:
     driver: local
 
 networks:
-  typivibe-network:
+  typi-network:
     driver: bridge

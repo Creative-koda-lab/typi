@@ -1,4 +1,4 @@
-# TypiVibe - Typing Practice App
+# Typi - Typing Practice App
 
 A minimalist typing practice application built with Astro.js, Tailwind CSS, Better Auth, and MongoDB.
 
@@ -43,7 +43,7 @@ A minimalist typing practice application built with Astro.js, Tailwind CSS, Bett
 
    The `.env` file is already configured for Docker setup:
    ```env
-   MONGODB_URI=mongodb://localhost:27017/typivibe
+   MONGODB_URI=mongodb://localhost:27017/typi
    AUTH_SECRET=dev-secret-key-change-in-production-12345678
    PUBLIC_APP_URL=http://localhost:4324
    ```
