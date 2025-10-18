@@ -65,9 +65,11 @@ export const POST: APIRoute = async ({ request }) => {
 		const existingScore = await scores.findOne({ userId: session.user.id });
 		const currentBest = existingScore?.bestWpm || 0;
 
+		console.log('Saving score:', { userId: session.user.id, wpm, currentBest, existingScore });
+
 		if (wpm > currentBest) {
 			// Update or insert the score, only if it's higher
-			await scores.updateOne(
+			const result = await scores.updateOne(
 				{ userId: session.user.id },
 				{
 					$set: {
@@ -84,6 +86,7 @@ export const POST: APIRoute = async ({ request }) => {
 					upsert: true
 				}
 			);
+			console.log('Score saved:', result);
 		}
 
 		return new Response(JSON.stringify({
