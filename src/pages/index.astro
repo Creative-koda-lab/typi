@@ -1,0 +1,478 @@
+---
+import '../styles/global.css';
+import AuthModal from '../components/AuthModal.astro';
+import Leaderboard from '../components/Leaderboard.astro';
+import { auth } from '../lib/auth';
+
+// Get session server-side
+const session = await auth.api.getSession({ headers: Astro.request.headers });
+---
+
+<html lang="en" class="dark">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Typi - Typing Practice</title>
+		<style>
+			@keyframes fadeIn {
+				from {
+					opacity: 0;
+					transform: translateY(10px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+			.animate-fade-in {
+				animation: fadeIn 0.5s ease-out;
+			}
+		</style>
+	</head>
+	<body class="min-h-screen bg-white dark:bg-black transition-colors duration-300">
+		<div class="container mx-auto px-4 py-12 max-w-5xl">
+			<!-- Header with Theme Toggle and User Menu -->
+			<header class="flex justify-between items-center mb-16">
+				<h1 class="text-3xl font-light text-gray-800 dark:text-gray-100">
+					<span class="font-normal">typi</span>vibe
+				</h1>
+				<div class="flex items-center gap-3">
+					<!-- User Profile / Sign In -->
+					{session?.user ? (
+						<div class="relative">
+							<button
+								id="userMenuBtn"
+								class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+							>
+								<div class="w-8 h-8 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
+									{session.user.name?.charAt(0).toUpperCase() || session.user.email?.charAt(0).toUpperCase()}
+								</div>
+								<span class="text-sm text-gray-700 dark:text-gray-300 hidden sm:block">{session.user.name || session.user.email}</span>
+							</button>
+							<!-- Dropdown Menu -->
+							<div
+								id="userMenu"
+								class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 hidden"
+							>
+								<button
+									id="signOutBtn"
+									class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+								>
+									Sign Out
+								</button>
+							</div>
+						</div>
+					) : (
+						<button
+							id="signInBtn"
+							class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+						>
+							Sign In
+						</button>
+					)}
+					<!-- Theme Toggle -->
+					<button
+						id="themeToggle"
+						class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+						aria-label="Toggle theme"
+					>
+						<svg class="w-5 h-5 text-gray-600 dark:text-gray-400 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
+							<path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/>
+						</svg>
+						<svg class="w-5 h-5 text-gray-600 dark:hidden" fill="currentColor" viewBox="0 0 20 20">
+							<path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+						</svg>
+					</button>
+				</div>
+			</header>
+
+			<!-- Stats Bar -->
+			<div class="flex justify-center gap-12 mb-12 text-sm">
+				<div class="text-center">
+					<div class="text-2xl font-light text-gray-800 dark:text-gray-100 mb-1" id="wpm">0</div>
+					<div class="text-gray-500 dark:text-gray-500">WPM</div>
+				</div>
+				<div class="text-center">
+					<div class="text-2xl font-light text-gray-800 dark:text-gray-100 mb-1" id="accuracy">100</div>
+					<div class="text-gray-500 dark:text-gray-500">accuracy</div>
+				</div>
+				<div class="text-center">
+					<div class="text-2xl font-light text-gray-800 dark:text-gray-100 mb-1" id="timer">0</div>
+					<div class="text-gray-500 dark:text-gray-500">time</div>
+				</div>
+				<div class="text-center">
+					<div class="text-2xl font-light text-gray-800 dark:text-gray-100 mb-1" id="topScore">0</div>
+					<div class="text-gray-500 dark:text-gray-500">best WPM</div>
+				</div>
+			</div>
+
+			<!-- Text Display -->
+			<main class="mb-12 flex justify-center">
+				<div
+					id="textDisplay"
+					class="text-2xl leading-loose font-mono select-none min-h-[200px] max-w-4xl"
+				>
+				</div>
+			</main>
+
+			<!-- Control Buttons -->
+			<div class="flex justify-center">
+				<button
+					id="restartBtn"
+					class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+					aria-label="Restart"
+					title="Restart"
+				>
+					<svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+					</svg>
+				</button>
+			</div>
+
+			<!-- Leaderboard -->
+			<Leaderboard />
+		</div>
+
+		<!-- Auth Modal -->
+		<AuthModal />
+
+		<script>
+			import { authClient } from '../lib/auth-client';
+
+			// Sign In button
+			const signInBtn = document.getElementById('signInBtn');
+			if (signInBtn) {
+				signInBtn.addEventListener('click', () => {
+					(window as any).openAuthModal();
+				});
+			}
+
+			// User menu toggle
+			const userMenuBtn = document.getElementById('userMenuBtn');
+			const userMenu = document.getElementById('userMenu');
+			if (userMenuBtn && userMenu) {
+				userMenuBtn.addEventListener('click', (e) => {
+					e.stopPropagation();
+					userMenu.classList.toggle('hidden');
+				});
+
+				// Close menu when clicking outside
+				document.addEventListener('click', () => {
+					userMenu.classList.add('hidden');
+				});
+			}
+
+			// Sign Out button
+			const signOutBtn = document.getElementById('signOutBtn');
+			if (signOutBtn) {
+				signOutBtn.addEventListener('click', async () => {
+					await authClient.signOut();
+					window.location.reload();
+				});
+			}
+
+			// Sample texts for typing practice
+			const sampleTexts = [
+				"The quick brown fox jumps over the lazy dog near the riverbank under the bright moonlight shining through the clouds while the stars twinkle overhead casting gentle shadows across the peaceful landscape where nature sleeps in silence and harmony",
+				"Technology is rapidly changing the way we live work and communicate with each other across the globe connecting millions of people through social networks video calls and instant messaging platforms that bring us closer together despite physical distances that separate us from our loved ones",
+				"Learning to type faster requires consistent practice dedication and patience over time as you develop muscle memory and improve your accuracy while maintaining good posture and proper finger placement on the keyboard which will help you become more efficient and productive in your daily tasks",
+				"Every great achievement begins with a single step forward into the unknown where courage meets determination and persistence overcomes obstacles that stand in the way of progress and success as we push ourselves beyond our comfort zones to reach new heights",
+				"The beauty of nature inspires creativity and brings peace to our busy lives offering moments of tranquility and reflection in gardens forests mountains and oceans where wildlife thrives and ecosystems flourish in delicate balance with the environment around them",
+				"Music has the power to connect people from different cultures and backgrounds through universal melodies and rhythms that transcend language barriers and speak directly to our emotions creating shared experiences and memories that last a lifetime and bring joy to our hearts",
+				"Reading books opens doors to new worlds and endless possibilities allowing us to explore different perspectives learn from the wisdom of others and expand our imagination through stories that transport us to distant lands and introduce us to fascinating characters",
+				"Practice makes perfect when you commit to improving your skills daily through focused effort and deliberate training that challenges your abilities and pushes you to grow stronger faster and more capable with each passing session as you work toward mastery"
+			];
+
+			let currentText = '';
+			let userInput = '';
+			let startTime: number | null = null;
+			let timerInterval: number | null = null;
+			let isTestActive = false;
+			let currentPosition = 0;
+			let correctChars = 0;
+			let totalChars = 0;
+			let errors = 0;
+			let isShowingResults = false;
+
+			const textDisplay = document.getElementById('textDisplay') as HTMLDivElement;
+			const wpmDisplay = document.getElementById('wpm') as HTMLDivElement;
+			const accuracyDisplay = document.getElementById('accuracy') as HTMLDivElement;
+			const timerDisplay = document.getElementById('timer') as HTMLDivElement;
+			const topScoreDisplay = document.getElementById('topScore') as HTMLDivElement;
+			const restartBtn = document.getElementById('restartBtn') as HTMLButtonElement;
+			const themeToggle = document.getElementById('themeToggle') as HTMLButtonElement;
+
+			// Theme Toggle
+			themeToggle.addEventListener('click', () => {
+				document.documentElement.classList.toggle('dark');
+				const isDark = document.documentElement.classList.contains('dark');
+				localStorage.setItem('theme', isDark ? 'dark' : 'light');
+			});
+
+			// Load theme preference
+			const savedTheme = localStorage.getItem('theme');
+			if (savedTheme === 'light') {
+				document.documentElement.classList.remove('dark');
+			}
+
+			// Anonymous authentication and score management
+			async function initializeAuth() {
+				try {
+					// Check if we already have a session via cookie
+					const response = await fetch('/api/auth/get-session');
+					const session = await response.json();
+
+					if (!session?.user) {
+						// Create anonymous session
+						await authClient.signIn.anonymous();
+					}
+				} catch (error) {
+					console.error('Error initializing auth:', error);
+					// Attempt to create anonymous session anyway
+					try {
+						await authClient.signIn.anonymous();
+					} catch (signInError) {
+						console.error('Error signing in anonymously:', signInError);
+					}
+				}
+
+				// Load best score from server
+				await loadBestScore();
+			}
+
+			async function loadBestScore() {
+				try {
+					const response = await fetch('/api/score');
+					const data = await response.json();
+					topScoreDisplay.textContent = data.bestScore.toString();
+				} catch (error) {
+					console.error('Error loading best score:', error);
+					topScoreDisplay.textContent = '0';
+				}
+			}
+
+			async function saveTopScore(wpm: number) {
+				try {
+					const response = await fetch('/api/score', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({ wpm }),
+					});
+
+					const data = await response.json();
+					if (data.success) {
+						topScoreDisplay.textContent = data.bestScore.toString();
+					}
+				} catch (error) {
+					console.error('Error saving score:', error);
+				}
+			}
+
+			// Initialize authentication on page load
+			initializeAuth();
+
+			function getRandomText() {
+				return sampleTexts[Math.floor(Math.random() * sampleTexts.length)];
+			}
+
+			function initText() {
+				currentText = getRandomText();
+				displayText();
+				resetStats();
+			}
+
+			function displayText() {
+				if (isShowingResults) {
+					// Show completion message
+					textDisplay.innerHTML = `
+						<div class="animate-fade-in text-center">
+							<div class="text-gray-500 dark:text-gray-500 text-lg mb-4">Test Complete!</div>
+							<div class="text-sm text-gray-400 dark:text-gray-600">Press any key to continue...</div>
+						</div>
+					`;
+					return;
+				}
+
+				const words = currentText.split(' ');
+				let charIndex = 0;
+
+				textDisplay.innerHTML = words.map((word) => {
+					const wordHtml = word.split('').map((letter) => {
+						let className = 'text-gray-400 dark:text-gray-700';
+
+						if (charIndex < currentPosition) {
+							// Already typed correctly
+							className = 'text-gray-800 dark:text-gray-400';
+						} else if (charIndex === currentPosition) {
+							// Current character with cursor
+							className = 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white';
+						}
+
+						const html = `<span class="${className}">${letter}</span>`;
+						charIndex++;
+						return html;
+					}).join('');
+
+					// Handle space character
+					const spaceHtml = (() => {
+						let className = 'text-gray-400 dark:text-gray-700';
+
+						if (charIndex < currentPosition) {
+							className = 'text-gray-800 dark:text-gray-400';
+						} else if (charIndex === currentPosition) {
+							className = 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white';
+						}
+
+						charIndex++;
+						return `<span class="${className}">&nbsp;</span>`;
+					})();
+
+					return `<span class="inline-block">${wordHtml}</span>${spaceHtml}`;
+				}).join('');
+			}
+
+			function updateStats() {
+				// Calculate WPM
+				if (startTime) {
+					const timeElapsed = (Date.now() - startTime) / 1000 / 60;
+					const wordsTyped = currentPosition / 5; // Standard: 5 characters = 1 word
+					const wpm = Math.round(wordsTyped / timeElapsed) || 0;
+					wpmDisplay.textContent = wpm.toString();
+				}
+
+				// Calculate Accuracy
+				const accuracy = totalChars > 0 ? Math.round(((totalChars - errors) / totalChars) * 100) : 100;
+				accuracyDisplay.textContent = accuracy.toString();
+			}
+
+			function startTimer() {
+				let timeElapsed = 0;
+				timerDisplay.textContent = timeElapsed.toString();
+
+				timerInterval = window.setInterval(() => {
+					timeElapsed++;
+					timerDisplay.textContent = timeElapsed.toString();
+				}, 1000);
+			}
+
+			function endTest() {
+				isTestActive = false;
+				if (timerInterval) {
+					clearInterval(timerInterval);
+				}
+				document.removeEventListener('keydown', handleKeyPress);
+
+				// Save top score
+				const currentWPM = parseInt(wpmDisplay.textContent || '0', 10);
+				saveTopScore(currentWPM);
+
+				// Dispatch event to reload leaderboard
+				window.dispatchEvent(new CustomEvent('testCompleted'));
+
+				// Show results screen
+				isShowingResults = true;
+				displayText();
+
+				// Add listener for next keypress to restart
+				document.addEventListener('keydown', handleRestartKeyPress, { once: true });
+			}
+
+			function handleRestartKeyPress(e: KeyboardEvent) {
+				e.preventDefault();
+				isShowingResults = false;
+				initText();
+			}
+
+			function resetStats() {
+				userInput = '';
+				startTime = null;
+				isTestActive = false;
+				currentPosition = 0;
+				correctChars = 0;
+				totalChars = 0;
+				errors = 0;
+				wpmDisplay.textContent = '0';
+				accuracyDisplay.textContent = '100';
+				timerDisplay.textContent = '0';
+				if (timerInterval) {
+					clearInterval(timerInterval);
+					timerInterval = null;
+				}
+				document.removeEventListener('keydown', handleKeyPress);
+				document.addEventListener('keydown', handleKeyPress);
+			}
+
+			function handleKeyPress(e: KeyboardEvent) {
+				// Ignore if typing in input fields or textareas
+				const target = e.target as HTMLElement;
+				if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+					return;
+				}
+
+				// Ignore if modal is open
+				const modal = document.getElementById('authModal');
+				if (modal && modal.style.display === 'flex') {
+					return;
+				}
+
+				// Ignore special keys
+				if (e.ctrlKey || e.altKey || e.metaKey) return;
+				if (e.key.length > 1 && e.key !== 'Backspace') return;
+
+				e.preventDefault();
+
+				// Start timer on first keypress
+				if (!isTestActive && currentPosition < currentText.length) {
+					isTestActive = true;
+					startTime = Date.now();
+					startTimer();
+				}
+
+				if (!isTestActive) return;
+
+				if (e.key === 'Backspace') {
+					// Allow backspace to go back
+					if (currentPosition > 0) {
+						currentPosition--;
+						displayText();
+					}
+				} else {
+					// Check if typed character matches
+					const expectedChar = currentText[currentPosition];
+					totalChars++;
+
+					if (e.key === expectedChar) {
+						// Correct key pressed
+						currentPosition++;
+						correctChars++;
+						displayText();
+						updateStats();
+
+						// Check if test is complete
+						if (currentPosition >= currentText.length) {
+							endTest();
+						}
+					} else {
+						// Wrong key pressed - don't advance, just count error
+						errors++;
+						updateStats();
+						// Visual feedback - shake or flash could be added here
+					}
+				}
+			}
+
+			restartBtn.addEventListener('click', () => {
+				isShowingResults = false;
+				initText();
+			});
+
+			// Initialize
+			initText();
+			document.addEventListener('keydown', handleKeyPress);
+		</script>
+	</body>
+</html>
