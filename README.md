@@ -2,6 +2,8 @@
 
 A minimalist typing practice application built with Astro.js, Tailwind CSS, Better Auth, and MongoDB.
 
+![Typi Preview](./public/preview.png)
+
 ## Features
 
 - **Minimalist Design**: Clean, distraction-free interface with dark/light mode
